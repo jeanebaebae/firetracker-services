@@ -1,0 +1,43 @@
+# Dependency modules (Folder library/paket)
+node_modules/
+jspm_packages/
+
+# Environment Variables & Config Sensitif (JANGAN SAMPAI TERUPLOAD)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Logs (File catatan error & debugging)
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Editor & System Files (Pengaturan IDE/Editor)
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Build & Dist Outputs (File hasil transpiliasi jika pakai TypeScript/Babel)
+dist/
+build/
+out/
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+
+# Temporary files & Caches
+.cache/
+*.tmp
+*.temp
