@@ -1,3 +1,7 @@
+const Redis = require('ioredis');
+
+const redis = new Redis();
+
 const express = require('express');
 const cors = require('cors');
 const pool = require('./config/db.js');
@@ -13,15 +17,23 @@ app.use('/api/hotspots', hotspotRoutes);
 
 app.get('/api/hotspots', async (req, res) => {
   const { minLng, minLat, maxLng, maxLat } = req.query;
+  const cacheKey = minLng && minLat && maxLng && maxLat
+    ? `hotspots:${minLng}:${minLat}:${maxLng}:${maxLat}`
+    : 'hotspots:all';
 
   try {
+    const cachedHotspots = await redis.get(cacheKey);
+
+    if (cachedHotspots) {
+      return res.json(JSON.parse(cachedHotspots));
+    }
+
     let query = `
       SELECT *
       FROM hotspots
     `;
     const values = [];
 
-    // Jika parameter area dikirimkan oleh peta, gunakan filter PostGIS
     if (minLng && minLat && maxLng && maxLat) {
       query += `
         WHERE ST_Within(
@@ -40,6 +52,9 @@ app.get('/api/hotspots', async (req, res) => {
     query += ` ORDER BY acq_datetime DESC LIMIT 10000;`;
 
     const result = await pool.query(query, values);
+    
+    await redis.set(cacheKey, JSON.stringify(result.rows), 'EX', 900);
+
     res.json(result.rows);
   } catch (err) {
     console.error(err.message);
@@ -49,7 +64,7 @@ app.get('/api/hotspots', async (req, res) => {
 
 initCronJobs();
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
 });
