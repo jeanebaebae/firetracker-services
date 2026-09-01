@@ -1,7 +1,7 @@
 const Redis = require('ioredis');
-
 const redis = new Redis();
 
+const compression = require('compression');
 const express = require('express');
 const cors = require('cors');
 const pool = require('./config/db.js');
@@ -11,10 +11,13 @@ const hotspotRoutes = require('./routes/hotspotRoutes');
 const { initCronJobs } = require('./services/cronService');
 
 const app = express();
+
+app.use(compression());
 app.use(cors());
 app.use(express.json());
-app.use('/api/hotspots', hotspotRoutes);
 
+// 1. Pindahkan endpoint custom dengan Redis ini SEBELUM hotspotRoutes 
+// atau hapus app.use('/api/hotspots', hotspotRoutes) jika jalurnya bentrok.
 app.get('/api/hotspots', async (req, res) => {
   const { minLng, minLat, maxLng, maxLat } = req.query;
   const cacheKey = minLng && minLat && maxLng && maxLat
@@ -61,6 +64,9 @@ app.get('/api/hotspots', async (req, res) => {
     res.status(500).json({ error: 'Server Error' });
   }
 });
+
+// 2. Pasang hotspotRoutes di bawah jika berisi sub-route lain (misal: /api/hotspots/:id)
+app.use('/api/hotspots', hotspotRoutes);
 
 initCronJobs();
 
